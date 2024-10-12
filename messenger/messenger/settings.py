@@ -149,3 +149,13 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# حداکثر حجم آپلود فایل در مگابایت
+MAX_UPLOAD_SIZE = 104857600  # 100 مگابایت
+
+# محدودیت حجم آپلود در تنظیمات فایل
+DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE
+FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE
