@@ -91,6 +91,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # image_instance.save()
         return '/media/chat_image.png'  # برگرداندن URL واقعی تصویر
 
-    # ذخیره فایل صوتی در دیتابیس
+        # ذخیره فایل صوتی در دیتابیس
     @database_sync_to_async
     def save_audio(self, audio):
+        # مشابه با save_image
+        return '/media/chat_audio.mp3'  # برگرداندن URL واقعی فایل صوتی
+
+    # دریافت پیام متنی از گروه چت
+    async def chat_message(self, event):
+        message = event['message']
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
+    # دریافت تصویر از گروه چت
+    async def chat_image(self, event):
+        image = event['image']
+        await self.send(text_data=json.dumps({
+            'image': image
+        }))
+
+    # دریافت فایل صوتی از گروه چت
+    async def chat_audio(self, event):
+        audio = event['audio']
+        await self.send(text_data=json.dumps({
+            'audio': audio
+        }))
