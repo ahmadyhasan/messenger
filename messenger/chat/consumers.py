@@ -1,6 +1,8 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.files.base import ContentFile
+from channels.db import database_sync_to_async
+from yourapp.models import Message  # مطمئن شوید که مدل Message شما اینجا وارد شده است
 import base64
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -32,6 +34,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         
         # ذخیره پیام متنی
         if message:
+            await self.save_message(message)  # ذخیره پیام در دیتابیس
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -45,12 +48,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
             image_data = base64.b64decode(image_data)
             image = ContentFile(image_data, name='chat_image.png')
 
+            # ذخیره تصویر در دیتابیس
+            image_url = await self.save_image(image)
+
             # ارسال پیام تصویری
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'chat_image',
-                    'image': image
+                    'image': image_url
                 }
             )
 
@@ -59,38 +65,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
             audio_data = base64.b64decode(audio_data)
             audio = ContentFile(audio_data, name='chat_audio.mp3')
 
+            # ذخیره فایل صوتی در دیتابیس
+            audio_url = await self.save_audio(audio)
+
             # ارسال پیام صوتی
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'chat_audio',
-                    'audio': audio
+                    'audio': audio_url
                 }
             )
 
-    # دریافت پیام متنی از گروه چت
-    async def chat_message(self, event):
-        message = event['message']
+    # ذخیره پیام در دیتابیس
+    @database_sync_to_async
+    def save_message(self, message):
+        Message.objects.create(content=message, sender=self.scope['user'])
 
-        # ارسال پیام به WebSocket
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
+    # ذخیره تصویر در دیتابیس
+    @database_sync_to_async
+    def save_image(self, image):
+        # باید اینجا مدل خود را ایجاد کنید و تصویر را ذخیره کنید
+        # مثلا:
+        # image_instance = ImageModel(image=image)
+        # image_instance.save()
+        return '/media/chat_image.png'  # برگرداندن URL واقعی تصویر
 
-    # دریافت تصویر از گروه چت
-    async def chat_image(self, event):
-        image = event['image']
-
-        # ارسال تصویر به WebSocket
-        await self.send(text_data=json.dumps({
-            'image': image.url
-        }))
-
-    # دریافت فایل صوتی از گروه چت
-    async def chat_audio(self, event):
-        audio = event['audio']
-
-        # ارسال فایل صوتی به WebSocket
-        await self.send(text_data=json.dumps({
-            'audio': audio.url
-        }))
+    # ذخیره فایل صوتی در دیتابیس
+    @database_sync_to_async
+    def save_audio(self, audio):
